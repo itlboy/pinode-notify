@@ -14,7 +14,6 @@ if (!DISCORD_WEBHOOK_URL) {
 let previousPortStatus = {};
 
 async function getPublicIP() {
-    return "1.54.227.114";
     try {
         const publicIpModule = await import('public-ip');
         return await publicIpModule.publicIpv4();
