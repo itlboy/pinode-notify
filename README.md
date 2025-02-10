@@ -11,28 +11,50 @@ PiNode Notify is a monitoring system that checks the operational status of a PiN
 ## 📌 1. Installation  
 
 ### **Prerequisites**  
-- **Node.js 22.x**  
+- **Docker & Docker Compose** (recommended)  
 - **A Discord Webhook URL** (for notifications)  
 
-### **Manual Installation**  
+### **Preferred Installation: Using Docker Compose**  
 1. **Clone the repository**  
    ```sh
    git clone https://github.com/<your-github-username>/pinode-notify.git
    cd pinode-notify
    ```
 
-2. **Install dependencies**  
-   ```sh
-   npm install
-   ```
-
-3. **Set up environment variables**  
+2. **Set up environment variables**  
    Create a `.env` file in the root directory and add the following:  
    ```
    DISCORD_WEBHOOK_URL=your_discord_webhook_url
    ```
 
-4. **Run the application**  
+   🔹 **How to get your Discord Webhook URL?**  
+   - Open Discord and go to the channel where you want to receive notifications.  
+   - Click **Edit Channel** → **Integrations** → **Webhooks**.  
+   - Click **"New Webhook"**, give it a name, and copy the Webhook URL.  
+   - Paste the copied URL into the `.env` file as `DISCORD_WEBHOOK_URL`.
+
+3. **Run the application with Docker Compose**  
+   ```sh
+   docker-compose up --build -d
+   ```
+   This will automatically build and run the application inside a Docker container.
+
+4. **Check logs to ensure everything is working correctly**  
+   ```sh
+   docker logs -f pinode-notify
+   ```
+
+---
+
+### **Alternative Installation: Manual Setup**  
+If you prefer to run the application without Docker, follow these steps:
+
+1. **Install dependencies**  
+   ```sh
+   npm install
+   ```
+
+2. **Run the application**  
    ```sh
    node index.js
    ```
