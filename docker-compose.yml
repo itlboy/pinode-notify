@@ -7,5 +7,5 @@ services:
     restart: always
     environment:
       - NODE_ENV=production
-    # volumes:
-    #   - .:/app
+    volumes:
+      - .env:/app/.env
