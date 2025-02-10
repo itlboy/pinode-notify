@@ -21,11 +21,9 @@ jobs:
         with:
           node-version: 22
 
-      - name: Install dependencies
-        run: npm install
-
-      - name: Run linting
-        run: npm run lint || echo "Linting errors, but continuing..."
+      - name: Get version tag
+        id: get_version
+        run: echo "VERSION=$(git rev-list --count HEAD)" >> $GITHUB_ENV
 
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
@@ -34,10 +32,12 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build Docker image
+      - name: Build Docker image with version tag
         run: |
+          docker build -t ghcr.io/${{ github.repository_owner }}/pinode-notify:${{ env.VERSION }} .
           docker build -t ghcr.io/${{ github.repository_owner }}/pinode-notify:latest .
 
       - name: Push Docker image to GitHub Container Registry
         run: |
+          docker push ghcr.io/${{ github.repository_owner }}/pinode-notify:${{ env.VERSION }}
           docker push ghcr.io/${{ github.repository_owner }}/pinode-notify:latest
