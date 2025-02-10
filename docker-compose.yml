@@ -2,9 +2,10 @@ version: '3.8'
 
 services:
   monitor:
-    build: .
+    # build: .
+    image: ghcr.io/itlboy/pinode-notify:latest
     restart: always
     environment:
       - NODE_ENV=production
-    volumes:
-      - .:/app
+    # volumes:
+    #   - .:/app
