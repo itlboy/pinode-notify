@@ -1,6 +1,5 @@
 const logger = require('./logger');
 const publicIp = require('public-ip');
-const isPortReachable = require('is-port-reachable');
 const axios = require('axios');
 require('dotenv').config();
 
@@ -15,6 +14,7 @@ if (!DISCORD_WEBHOOK_URL) {
 let previousPortStatus = {};
 
 async function getPublicIP() {
+    return "1.54.227.114";
     try {
         const publicIpModule = await import('public-ip');
         return await publicIpModule.publicIpv4();
@@ -25,6 +25,7 @@ async function getPublicIP() {
 }
 
 async function checkPorts(ip) {
+    const isPortReachable = (await import('is-port-reachable')).default;
     const portStatus = {};
 
     for (const port of PORTS_TO_CHECK) {
@@ -59,28 +60,24 @@ async function monitor() {
     logger.info(`🌐 Public IP: ${ip}`);
 
     const currentPortStatus = await checkPorts(ip);
+    let logMessage = `🌐 **Public IP:** ${ip}\n`;
+    let statusChanged = false;
 
-    // First-time run: Log all ports to Discord
-    if (Object.keys(previousPortStatus).length === 0) {
-        let startupMessage = `🚀 *PiNode Monitoring Started*\n🔹 **Public IP:** ${ip}\n`;
-        startupMessage += PORTS_TO_CHECK.map(
-            (port) =>
-                `🔹 **Port ${port}**: ${currentPortStatus[port] ? '🟢 Open' : '🔴 Unreachable'}`
-        ).join('\n');
-        await sendDiscordAlert(startupMessage);
-    } else {
-        // Log only if there's a status change
-        let changeMessage = '';
-        for (const port of PORTS_TO_CHECK) {
-            if (previousPortStatus[port] !== currentPortStatus[port]) {
-                changeMessage += `🔹 **Port ${port}** changed: ${
-                    currentPortStatus[port] ? '🟢 Open' : '🔴 Unreachable'
-                }\n`;
-            }
+    for (const port of PORTS_TO_CHECK) {
+        const portState = currentPortStatus[port] ? '🟢 Open' : '🔴 Unreachable';
+        logMessage += `🔹 **Port ${port}:** ${portState}\n`;
+
+        if (previousPortStatus[port] !== undefined && previousPortStatus[port] !== currentPortStatus[port]) {
+            statusChanged = true;
         }
-        if (changeMessage) {
-            await sendDiscordAlert(`⚠️ *Port Status Change Detected*\n${changeMessage}`);
-        }
+    }
+
+    // Log the port status to console
+    logger.info(logMessage);
+
+    // Only send to Discord if it's the first run or if there's a change
+    if (Object.keys(previousPortStatus).length === 0 || statusChanged) {
+        await sendDiscordAlert(`⚠️ *PiNode Monitoring Update*\n${logMessage}`);
     }
 
     // Update previous status for next comparison
