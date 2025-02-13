@@ -5,7 +5,7 @@ require('dotenv').config();
 
 const PORTS_TO_CHECK = Array.from({ length: 10 }, (_, i) => 31400 + i);
 const DISCORD_WEBHOOK_URL = process.env.DISCORD_WEBHOOK_URL;
-const PORTCHECKER_API_URL = "https://portchecker.io/";
+const PORTCHECKER_API_URL = "https://portchecker.io/api/";
 
 if (!DISCORD_WEBHOOK_URL) {
     console.error('❌ DISCORD_WEBHOOK_URL is not set in .env file');
@@ -29,11 +29,8 @@ async function checkPorts(ip) {
 
     for (const port of PORTS_TO_CHECK) {
         try {
-            const response = await axios.get(`${PORTCHECKER_API_URL}check`, {
-                params: { host: ip, port }
-            });
-
-            const isReachable = response.data && response.data.open;
+            const response = await axios.get(`${PORTCHECKER_API_URL}${ip}/${port}`);
+            const isReachable = response.data.trim() === "True"; // Fix: Check for "True" as string
             portStatus[port] = isReachable;
 
             if (isReachable) {
