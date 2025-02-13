@@ -4,7 +4,7 @@ const { checkPorts } = require('./portChecker'); // Import module
 const axios = require('axios');
 require('dotenv').config();
 
-const PORTS_TO_CHECK = Array.from({ length: 10 }, (_, i) => 31400 + i);
+const PORTS_TO_CHECK = Array.from({ length: 3 }, (_, i) => 31401 + i);
 const DISCORD_WEBHOOK_URL = process.env.DISCORD_WEBHOOK_URL;
 
 if (!DISCORD_WEBHOOK_URL) {
