@@ -1,11 +1,11 @@
 const logger = require('./logger');
 const publicIp = require('public-ip');
+const { checkPorts } = require('./portChecker'); // Import module
 const axios = require('axios');
 require('dotenv').config();
 
 const PORTS_TO_CHECK = Array.from({ length: 10 }, (_, i) => 31400 + i);
 const DISCORD_WEBHOOK_URL = process.env.DISCORD_WEBHOOK_URL;
-const PORTCHECKER_API_URL = "https://portchecker.io/api/";
 
 if (!DISCORD_WEBHOOK_URL) {
     console.error('❌ DISCORD_WEBHOOK_URL is not set in .env file');
@@ -24,29 +24,6 @@ async function getPublicIP() {
     }
 }
 
-async function checkPorts(ip) {
-    const portStatus = {};
-
-    for (const port of PORTS_TO_CHECK) {
-        try {
-            const response = await axios.get(`${PORTCHECKER_API_URL}${ip}/${port}`);
-            const isReachable = response.data.trim() === "True"; // Fix: Check for "True" as string
-            portStatus[port] = isReachable;
-
-            if (isReachable) {
-                logger.info(`🟢 Port ${port} on ${ip} is open.`);
-            } else {
-                logger.warn(`🔴 Port ${port} on ${ip} is unreachable.`);
-            }
-        } catch (error) {
-            logger.error(`❌ Error checking port ${port} on ${ip}:`, error);
-            portStatus[port] = false;
-        }
-    }
-
-    return portStatus;
-}
-
 async function sendDiscordAlert(message) {
     try {
         await axios.post(DISCORD_WEBHOOK_URL, { content: message });
@@ -59,7 +36,7 @@ async function monitor() {
     const ip = await getPublicIP();
     logger.info(`🌐 Public IP: ${ip}`);
 
-    const currentPortStatus = await checkPorts(ip);
+    const currentPortStatus = await checkPorts(ip, PORTS_TO_CHECK);
     let logMessage = `🌐 **Public IP:** ${ip}\n`;
     let statusChanged = false;
 
