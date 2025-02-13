@@ -32,12 +32,13 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build Docker image with version tag
-        run: |
-          docker build -t ghcr.io/${{ github.repository_owner }}/pinode-notify:${{ env.VERSION }} .
-          docker build -t ghcr.io/${{ github.repository_owner }}/pinode-notify:latest .
-
-      - name: Push Docker image to GitHub Container Registry
-        run: |
-          docker push ghcr.io/${{ github.repository_owner }}/pinode-notify:${{ env.VERSION }}
-          docker push ghcr.io/${{ github.repository_owner }}/pinode-notify:latest
+      - name: Build and Push Docker image (with cache)
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/pinode-notify:${{ env.VERSION }}
+            ghcr.io/${{ github.repository_owner }}/pinode-notify:latest
+          cache-from: type=registry,ref=ghcr.io/${{ github.repository_owner }}/pinode-notify:cache
+          cache-to: type=registry,ref=ghcr.io/${{ github.repository_owner }}/pinode-notify:cache,mode=max
