@@ -5,6 +5,7 @@ require('dotenv').config();
 
 const PORTS_TO_CHECK = Array.from({ length: 10 }, (_, i) => 31400 + i);
 const DISCORD_WEBHOOK_URL = process.env.DISCORD_WEBHOOK_URL;
+const PORTCHECKER_API_URL = "https://portchecker.io/";
 
 if (!DISCORD_WEBHOOK_URL) {
     console.error('❌ DISCORD_WEBHOOK_URL is not set in .env file');
@@ -24,12 +25,15 @@ async function getPublicIP() {
 }
 
 async function checkPorts(ip) {
-    const isPortReachable = (await import('is-port-reachable')).default;
     const portStatus = {};
 
     for (const port of PORTS_TO_CHECK) {
         try {
-            const isReachable = await isPortReachable(port, { host: ip });
+            const response = await axios.get(`${PORTCHECKER_API_URL}check`, {
+                params: { host: ip, port }
+            });
+
+            const isReachable = response.data && response.data.open;
             portStatus[port] = isReachable;
 
             if (isReachable) {
@@ -71,10 +75,10 @@ async function monitor() {
         }
     }
 
-    // Log the port status to console
+    // Log to console
     logger.info(logMessage);
 
-    // Only send to Discord if it's the first run or if there's a change
+    // Send to Discord only if it's the first run or if there's a change
     if (Object.keys(previousPortStatus).length === 0 || statusChanged) {
         await sendDiscordAlert(`⚠️ *PiNode Monitoring Update*\n${logMessage}`);
     }
