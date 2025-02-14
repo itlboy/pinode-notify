@@ -1,10 +1,13 @@
 const logger = require('./logger');
 const { checkPorts } = require('./portChecker');
-const { sendDiscordAlert } = require('./notify'); // ✅ Import từ notify.js
-const { startScheduler } = require('./scheduler'); // ✅ Import scheduler
+const { sendDiscordAlert } = require('./notify');
+const { startScheduler } = require('./scheduler');
 require('dotenv').config();
 
 const PORTS_TO_CHECK = Array.from({ length: 3 }, (_, i) => 31401 + i);
+
+// ✅ Đọc thời gian kiểm tra port từ `.env`, mặc định 5 phút
+const PORT_CHECK_INTERVAL_MINUTES = parseInt(process.env.PORT_CHECK_INTERVAL_MINUTES) || 5;
 
 let previousPortStatus = {};
 let retrying = false; // 🛠 Đánh dấu trạng thái thử lại khi có lỗi
@@ -70,9 +73,9 @@ async function monitor() {
     }
 }
 
-// ✅ Chạy kiểm tra ngay khi ứng dụng mở, sau đó kiểm tra lại mỗi 5 phút
-setInterval(monitor, 5 * 60 * 1000);
+// ✅ Chạy kiểm tra ngay khi ứng dụng mở, sau đó kiểm tra lại theo thời gian từ `.env`
+setInterval(monitor, PORT_CHECK_INTERVAL_MINUTES * 60 * 1000);
 monitor();
 
-// ✅ Khởi động scheduler để gửi notify vào 9h sáng & 9h tối
+// ✅ Khởi động scheduler để gửi notify vào giờ cấu hình trong `.env`
 startScheduler();

@@ -1,91 +1,92 @@
-# 🚀 PiNode Notify - Monitoring & Alert System  
+# 📢 Pi Node Notify
 
-PiNode Notify is a monitoring system that checks the operational status of a PiNode by:  
-✅ Retrieving the **public IP** of the machine  
-✅ Pinging ports **31400 - 31409**  
-✅ Sending alerts if any port is unreachable  
-✅ Supporting **Discord notifications**  
+Pi Node Notify là một ứng dụng giám sát tình trạng của Pi Node bằng cách kiểm tra trạng thái cổng (`port`) và gửi thông báo lên Discord. Ứng dụng sẽ tự động kiểm tra định kỳ và gửi thông báo khi có sự thay đổi.
 
 ---
 
-## 📌 1. Installation  
-
-### **Prerequisites**  
-- **Docker & Docker Compose** (recommended)  
-- **A Discord Webhook URL** (for notifications)  
-
-### **Preferred Installation: Using Docker Compose**  
-1. **Clone the repository**  
-   ```sh
-   git clone https://github.com/<your-github-username>/pinode-notify.git
-   cd pinode-notify
-   ```
-
-2. **Set up environment variables**  
-   Create a `.env` file in the root directory and add the following:  
-   ```
-   DISCORD_WEBHOOK_URL=your_discord_webhook_url
-   ```
-
-   🔹 **How to get your Discord Webhook URL?**  
-   - Open Discord and go to the channel where you want to receive notifications.  
-   - Click **Edit Channel** → **Integrations** → **Webhooks**.  
-   - Click **"New Webhook"**, give it a name, and copy the Webhook URL.  
-   - Paste the copied URL into the `.env` file as `DISCORD_WEBHOOK_URL`.
-
-3. **Run the application with Docker Compose**  
-   ```sh
-   docker-compose up --build -d
-   ```
-   This will automatically build and run the application inside a Docker container.
-
-4. **Check logs to ensure everything is working correctly**  
-   ```sh
-   docker logs -f pinode-notify
-   ```
+## 🚀 **Tính năng chính**
+- ✅ **Kiểm tra trạng thái các cổng của Pi Node**.
+- ✅ **Gửi thông báo lên Discord nếu có thay đổi về trạng thái cổng**.
+- ✅ **Gửi thông báo mỗi ngày vào các giờ được cấu hình (`9h sáng` và `9h tối` mặc định)**.
+- ✅ **Cho phép tuỳ chỉnh tần suất kiểm tra và giờ gửi thông báo qua `.env`**.
+- ✅ **Hỗ trợ Docker & có thể build thành ứng dụng trên Windows/Mac**.
 
 ---
 
-### **Alternative Installation: Manual Setup**  
-If you prefer to run the application without Docker, follow these steps:
+## 📥 **1. Cài đặt**
+### 🔹 **1.1. Cài đặt trực tiếp**
+Yêu cầu:
+- **Node.js v22+**
+- **Git**
+- **Discord Webhook URL**
 
-1. **Install dependencies**  
-   ```sh
-   npm install
-   ```
+📍 **Cài đặt ứng dụng:**
+```sh
+git clone https://github.com/YOUR_GITHUB/pi-node-notify.git
+cd pi-node-notify
+npm install
+```
 
-2. **Run the application**  
-   ```sh
-   node index.js
-   ```
-
----
-
-## 📌 2. How It Works  
-
-1. On startup, the system retrieves the **public IP** and checks the status of ports **31400 - 31409**.  
-2. If any port is unreachable, an **alert is sent to Discord**.  
-3. The monitoring process runs every **5 minutes** to check port availability and send alerts if needed.  
-
----
-
-## 📌 3. Logging  
-
-- The application uses **Winston** for logging.  
-- Logs are displayed in the console and saved to `error.log` if an error occurs.  
+### 🔹 **1.2. Chạy bằng Docker**
+Nếu bạn muốn chạy ứng dụng bằng Docker:
+```sh
+docker run -d --env-file .env ghcr.io/YOUR_GITHUB/pi-node-notify:latest
+```
 
 ---
 
-## 📌 4. Contributing  
+## ⚙️ **2. Cấu hình `.env`**
+📍 **Tạo file `.env` trong thư mục dự án:**
+```ini
+# 🔗 Webhook của Discord để nhận thông báo
+DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/YOUR_WEBHOOK_ID/YOUR_WEBHOOK_TOKEN
 
-Feel free to fork this repository and submit pull requests. Contributions are always welcome!  
+# ⏰ Giờ gửi notify hằng ngày (mặc định 9h sáng & 9h tối)
+SCHEDULE_NOTIFY_HOURS=9,21
+
+# ⏳ Thời gian kiểm tra cổng (mặc định 5 phút)
+PORT_CHECK_INTERVAL_MINUTES=5
+```
+
+📌 **Mô tả các biến môi trường:**
+| Biến                 | Mô tả                                                  | Mặc định |
+|----------------------|------------------------------------------------------|---------|
+| `DISCORD_WEBHOOK_URL` | Webhook Discord để nhận thông báo                  | Bắt buộc |
+| `SCHEDULE_NOTIFY_HOURS` | Giờ gửi thông báo mỗi ngày (cách nhau bằng dấu `,`) | `9,21` (9h sáng & 9h tối) |
+| `PORT_CHECK_INTERVAL_MINUTES` | Số phút kiểm tra port định kỳ                 | `5` phút |
 
 ---
 
-## 📌 5. License  
-
-This project is open-source and available under the **MIT License**.  
+## ▶ **3. Chạy ứng dụng**
+📍 **Chạy ứng dụng sau khi cài đặt:**
+```sh
+npm start
+```
+Hoặc chạy với Docker:
+```sh
+docker run -d --env-file .env ghcr.io/YOUR_GITHUB/pi-node-notify:latest
+```
 
 ---
 
-🚀 **Happy Monitoring!**  
+## 🔨 **4. Build ứng dụng cho Windows & macOS**
+Nếu bạn muốn build thành ứng dụng Desktop:
+```sh
+npm run build
+```
+📍 **Sau khi build, file `.exe` hoặc `.dmg` sẽ được tạo trong thư mục `dist/`.**
+
+---
+
+## 📦 **5. Đóng góp & Phát triển**
+Nếu bạn muốn đóng góp, vui lòng:
+1. Fork repository.
+2. Tạo một branch mới (`feature/my-new-feature`).
+3. Commit thay đổi (`git commit -m 'Add new feature'`).
+4. Push lên GitHub (`git push origin feature/my-new-feature`).
+5. Tạo một Pull Request.
+
+---
+
+## 📜 **6. Giấy phép**
+Ứng dụng này được phát hành dưới [MIT License](LICENSE).
