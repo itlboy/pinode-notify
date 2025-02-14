@@ -7,4 +7,3 @@ docker compose pull
 echo Starting containers...
 docker compose up -d
 echo Done.
-docker compose logs -f
