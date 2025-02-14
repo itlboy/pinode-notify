@@ -1,15 +1,10 @@
 const logger = require('./logger');
-const { checkPorts } = require('./portChecker'); // Import module
-const axios = require('axios');
+const { checkPorts } = require('./portChecker');
+const { sendDiscordAlert } = require('./notify'); // ✅ Import từ notify.js
+const { startScheduler } = require('./scheduler'); // ✅ Import scheduler
 require('dotenv').config();
 
 const PORTS_TO_CHECK = Array.from({ length: 3 }, (_, i) => 31401 + i);
-const DISCORD_WEBHOOK_URL = process.env.DISCORD_WEBHOOK_URL;
-
-if (!DISCORD_WEBHOOK_URL) {
-    console.error('❌ DISCORD_WEBHOOK_URL is not set in .env file');
-    process.exit(1);
-}
 
 let previousPortStatus = {};
 let retrying = false; // 🛠 Đánh dấu trạng thái thử lại khi có lỗi
@@ -22,16 +17,6 @@ async function getPublicIP() {
     } catch (error) {
         logger.error('❌ Failed to retrieve public IP:', error);
         return 'Unknown';
-    }
-}
-
-// ✅ Hàm gửi thông báo lên Discord
-async function sendDiscordAlert(message) {
-    try {
-        await axios.post(DISCORD_WEBHOOK_URL, { content: message });
-        logger.info("✅ Notification sent to Discord.");
-    } catch (error) {
-        logger.error('❌ Failed to send Discord alert:', error);
     }
 }
 
@@ -67,7 +52,7 @@ async function monitor() {
             retrying = true;
             logger.warn("⚠️ Connection error detected. Retrying in 1 minute...");
             setTimeout(async () => {
-                await monitor(); // ✅ Thử lại sau 1 phút
+                await monitor();
                 retrying = false;
             }, 60 * 1000);
             return;
@@ -88,3 +73,6 @@ async function monitor() {
 // ✅ Chạy kiểm tra ngay khi ứng dụng mở, sau đó kiểm tra lại mỗi 5 phút
 setInterval(monitor, 5 * 60 * 1000);
 monitor();
+
+// ✅ Khởi động scheduler để gửi notify vào 9h sáng & 9h tối
+startScheduler();
