@@ -1,3 +1,4 @@
+const os = require('os');
 const logger = require('./logger');
 const { checkPorts } = require('./portChecker');
 const { sendDiscordAlert } = require('./notify');
@@ -5,12 +6,11 @@ const { startScheduler } = require('./scheduler');
 require('dotenv').config();
 
 const PORTS_TO_CHECK = Array.from({ length: 3 }, (_, i) => 31401 + i);
-
-// ✅ Đọc thời gian kiểm tra port từ `.env`, mặc định 5 phút
 const PORT_CHECK_INTERVAL_MINUTES = parseInt(process.env.PORT_CHECK_INTERVAL_MINUTES) || 5;
+const MEMORY_USAGE_THRESHOLD = parseFloat(process.env.MEMORY_USAGE_THRESHOLD) || 85;
 
 let previousPortStatus = {};
-let retrying = false; // 🛠 Đánh dấu trạng thái thử lại khi có lỗi
+let retrying = false;
 
 // ✅ Hàm lấy IP Public
 async function getPublicIP() {
@@ -23,14 +23,33 @@ async function getPublicIP() {
     }
 }
 
-// ✅ Hàm kiểm tra trạng thái port & gửi notify nếu thay đổi
+// ✅ Hàm kiểm tra Memory sử dụng
+function getMemoryUsage() {
+    const totalMemory = os.totalmem();
+    const freeMemory = os.freemem();
+    const usedMemory = totalMemory - freeMemory;
+    return (usedMemory / totalMemory) * 100; // Trả về % sử dụng RAM
+}
+
+// ✅ Hàm kiểm tra trạng thái port & memory, sau đó gửi notify
 async function monitor() {
     const ip = await getPublicIP();
-    logger.info(`🌐 Public IP: ${ip}`);
+    const memoryUsage = getMemoryUsage();
+    let isMemoryHigh = memoryUsage > MEMORY_USAGE_THRESHOLD;
+    
+    logger.info(`🌐 Public IP: ${ip}\n🖥️ Memory Usage: ${memoryUsage.toFixed(2)}%`);
 
     try {
         const currentPortStatus = await checkPorts(ip, PORTS_TO_CHECK);
         let logMessage = `🌐 **Public IP:** ${ip}\n`;
+        
+        // ✅ Nếu Memory cao, hiển thị cảnh báo màu đỏ
+        if (isMemoryHigh) {
+            logMessage += `🔴 **Memory Usage:** ${memoryUsage.toFixed(2)}% (Threshold: ${MEMORY_USAGE_THRESHOLD}%)\n`;
+        } else {
+            logMessage += `🖥️ **Memory Usage:** ${memoryUsage.toFixed(2)}%\n`;
+        }
+
         let statusChanged = false;
         let hasError = false;
 
@@ -47,22 +66,8 @@ async function monitor() {
             }
         }
 
-        // Log to console
-        logger.info(logMessage);
-
-        // ✅ Nếu có lỗi, thử lại sau 1 phút trước khi gửi notify
-        if (hasError && !retrying) {
-            retrying = true;
-            logger.warn("⚠️ Connection error detected. Retrying in 1 minute...");
-            setTimeout(async () => {
-                await monitor();
-                retrying = false;
-            }, 60 * 1000);
-            return;
-        }
-
-        // ✅ Gửi notify lên Discord nếu có thay đổi hoặc nếu vẫn lỗi sau retry
-        if (Object.keys(previousPortStatus).length === 0 || statusChanged || hasError) {
+        // ✅ Gửi notify nếu có thay đổi, có lỗi, hoặc Memory vượt ngưỡng
+        if (Object.keys(previousPortStatus).length === 0 || statusChanged || hasError || isMemoryHigh) {
             await sendDiscordAlert(`⚠️ *PiNode Monitoring Update*\n${logMessage}`);
         }
 
@@ -77,14 +82,16 @@ async function monitor() {
 async function startupNotification() {
     logger.info("📢 Pinode monitoring startup");
     await sendDiscordAlert("📢 Pinode monitoring startup");
+
+    // ✅ Kiểm tra Port ngay lập tức sau khi gửi thông báo khởi động
+    await monitor();
 }
 
 // ✅ Gửi thông báo startup khi ứng dụng khởi chạy
 startupNotification();
 
-// ✅ Chạy kiểm tra ngay khi ứng dụng mở, sau đó kiểm tra lại theo thời gian từ `.env`
+// ✅ Chạy kiểm tra Port & Memory theo thời gian từ `.env`
 setInterval(monitor, PORT_CHECK_INTERVAL_MINUTES * 60 * 1000);
-monitor();
 
 // ✅ Khởi động scheduler để gửi notify vào giờ cấu hình trong `.env`
 startScheduler();
