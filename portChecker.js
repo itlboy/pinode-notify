@@ -1,29 +1,24 @@
 const axios = require('axios');
 const logger = require('./logger');
 
-const PORTCHECKER_API_URL = "https://portchecker.io/api/";
-
-async function checkPorts(ip, ports) {
-    const portStatus = {};
-
-    for (const port of ports) {
-        try {
-            const response = await axios.get(`${PORTCHECKER_API_URL}${ip}/${port}`);
-            const isReachable = response.data.trim() === "True"; // Fix: Check for "True" as string
-            portStatus[port] = isReachable;
-
-            if (isReachable) {
-                logger.info(`🟢 Port ${port} on ${ip} is open.`);
-            } else {
-                logger.warn(`🔴 Port ${port} on ${ip} is unreachable.`);
-            }
-        } catch (error) {
-            logger.error(`❌ Error checking port ${port} on ${ip}:`, error);
-            portStatus[port] = false;
-        }
+// ✅ Hàm kiểm tra trạng thái của một cổng với timeout 30 giây
+async function checkPort(ip, port) {
+    try {
+        const response = await axios.get(`https://portchecker.io/api/${ip}/${port}`, { timeout: 30000 }); // ⏳ Timeout 30 giây
+        return response.data === "True";
+    } catch (error) {
+        logger.error(`❌ Error checking port ${port} on ${ip}:`, error.message);
+        return false; // Nếu lỗi, giả định cổng đóng
     }
+}
 
-    return portStatus;
+// ✅ Kiểm tra danh sách các cổng
+async function checkPorts(ip, ports) {
+    const results = {};
+    for (const port of ports) {
+        results[port] = await checkPort(ip, port);
+    }
+    return results;
 }
 
 module.exports = { checkPorts };

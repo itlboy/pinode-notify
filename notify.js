@@ -9,13 +9,13 @@ if (!DISCORD_WEBHOOK_URL) {
     process.exit(1);
 }
 
-// ✅ Hàm gửi thông báo lên Discord
+// ✅ Hàm gửi thông báo lên Discord với timeout 30 giây
 async function sendDiscordAlert(message) {
     try {
-        await axios.post(DISCORD_WEBHOOK_URL, { content: message });
+        await axios.post(DISCORD_WEBHOOK_URL, { content: message }, { timeout: 30000 }); // ⏳ Timeout 30 giây
         logger.info("✅ Notification sent to Discord.");
     } catch (error) {
-        logger.error('❌ Failed to send Discord alert:', error);
+        logger.error('❌ Failed to send Discord alert:', error.message);
     }
 }
 
