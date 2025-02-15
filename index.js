@@ -32,7 +32,7 @@ function getMemoryUsage() {
 }
 
 // ✅ Hàm kiểm tra trạng thái port & memory, sau đó gửi notify
-async function monitor() {
+async function monitor(retry = false) {
     const ip = await getPublicIP();
     const memoryUsage = getMemoryUsage();
     let isMemoryHigh = memoryUsage > MEMORY_USAGE_THRESHOLD;
@@ -66,7 +66,18 @@ async function monitor() {
             }
         }
 
-        // ✅ Gửi notify nếu có thay đổi, có lỗi, hoặc Memory vượt ngưỡng
+        // ✅ Nếu có lỗi, thử lại sau 1 phút trước khi gửi notify
+        if (hasError && !retry && !retrying) {
+            retrying = true;
+            logger.warn("⚠️ Connection error detected. Retrying in 1 minute...");
+            setTimeout(async () => {
+                await monitor(true);
+                retrying = false;
+            }, 60 * 1000);
+            return;
+        }
+
+        // ✅ Gửi notify nếu có thay đổi, có lỗi (sau retry), hoặc Memory vượt ngưỡng
         if (Object.keys(previousPortStatus).length === 0 || statusChanged || hasError || isMemoryHigh) {
             await sendDiscordAlert(`⚠️ *PiNode Monitoring Update*\n${logMessage}`);
         }
@@ -75,6 +86,16 @@ async function monitor() {
         previousPortStatus = { ...currentPortStatus };
     } catch (error) {
         logger.error("❌ Error during monitoring:", error);
+
+        // ✅ Nếu lỗi khi gọi API, thử lại sau 1 phút trước khi gửi notify
+        if (!retrying) {
+            retrying = true;
+            logger.warn("⚠️ API error detected. Retrying in 1 minute...");
+            setTimeout(async () => {
+                await monitor(true);
+                retrying = false;
+            }, 60 * 1000);
+        }
     }
 }
 
