@@ -73,6 +73,15 @@ async function monitor() {
     }
 }
 
+// ✅ Gửi thông báo khi ứng dụng khởi động
+async function startupNotification() {
+    logger.info("📢 Pinode monitoring startup");
+    await sendDiscordAlert("📢 Pinode monitoring startup");
+}
+
+// ✅ Gửi thông báo startup khi ứng dụng khởi chạy
+startupNotification();
+
 // ✅ Chạy kiểm tra ngay khi ứng dụng mở, sau đó kiểm tra lại theo thời gian từ `.env`
 setInterval(monitor, PORT_CHECK_INTERVAL_MINUTES * 60 * 1000);
 monitor();
