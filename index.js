@@ -1,8 +1,8 @@
 const os = require('os');
 const logger = require('./logger');
-const { checkPorts } = require('./portChecker');
 const { sendDiscordAlert } = require('./notify');
 const { startScheduler } = require('./scheduler');
+const checkPort = require('./checkPortPoMod'); // Yêu cầu module checkPortPoMod
 require('dotenv').config();
 
 const PORTS_TO_CHECK = Array.from({ length: 3 }, (_, i) => 31401 + i);
@@ -40,7 +40,7 @@ async function monitor(retry = false) {
     logger.info(`🌐 Public IP: ${ip}\n🖥️ Memory Usage: ${memoryUsage.toFixed(2)}%`);
 
     try {
-        const currentPortStatus = await checkPorts(ip, PORTS_TO_CHECK);
+        const currentPortStatus = await checkPort(); // Gọi hàm checkPort từ module mới
         let logMessage = `🌐 **Public IP:** ${ip}\n`;
         
         // ✅ Nếu Memory cao, hiển thị cảnh báo màu đỏ
