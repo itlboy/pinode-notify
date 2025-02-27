@@ -15,8 +15,9 @@ let retrying = false;
 // ✅ Hàm lấy IP Public
 async function getPublicIP() {
     try {
-        const publicIpModule = await import('public-ip');
-        return await publicIpModule.publicIpv4();
+        const response = await fetch('https://api64.ipify.org?format=json');
+        const data = await response.json();
+        return data.ip;
     } catch (error) {
         logger.error('❌ Failed to retrieve public IP:', error);
         return 'Unknown';
